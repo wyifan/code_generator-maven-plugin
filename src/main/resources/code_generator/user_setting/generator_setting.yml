@@ -1,0 +1,95 @@
+
+# 包配置
+baseConfigs:
+  basePackagePrefix: com.yifan # 项目的基础包名
+
+  # JDBC 数据库连接配置
+  jdbcConfig:
+    driver: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://192.168.189.135:3306/learning?useSSL=false&serverTimezone=UTC
+    username: root
+    password: 123456
+  # Java 类型到数据库类型的映射
+  typeMapping:
+    Long: BIGINT
+    Integer: INT
+    String: VARCHAR(255)
+    Boolean: TINYINT(1)
+    Date: DATETIME
+    LocalDateTime: DATETIME
+    BigDecimal: DECIMAL(18, 4)
+    Double: DOUBLE
+    Float: FLOAT1
+
+modelSettings:
+  tableAppendMode: append # 表生成模式，支持 overwrite 和 append
+  tables:
+    - tableName: "user_info"
+      entityName: "UserInfo"
+      useBaseEntity: true
+      columns:
+        - {javaName: "username", javaType: "String", comment: "用户名" }
+        - {javaName: "age", javaType: "Integer", comment: "年龄" }
+  templateAppendMode: append # 模板生成模式，支持 overwrite 和 append
+  templateDir:
+  templates:
+    - { templateFile: "baseEntity.ftl", fileNameFormat: "BaseEntity.java", fileType: "java", outputDir: "", packageSuffix: "", customParams: "{}", generateOnce: true }
+ #   - { templateFile: "entity.ftl", fileNameFormat: "${entityName}.java", fileType: "java", outputDir: "", packageSuffix: "",customParams: "{}", generateOnce: false }
+    - { templateFile: "mapper.ftl", fileNameFormat: "${entityName}Mapper.java", fileType: "java", outputDir: "", packageSuffix: "",customParams: "{}", generateOnce: false }
+#    - { templateFile: "service.ftl", fileNameFormat: "I${entityName}Service.java", fileType: "java", outputDir: "", packageSuffix: "",customParams: "{}", generateOnce: false }
+#    - { templateFile: "serviceImpl.ftl", fileNameFormat: "${entityName}ServiceImpl.java", fileType: "java", outputDir: "", packageSuffix: "",customParams: "{}", generateOnce: false }
+#    - { templateFile: "controller.ftl", fileNameFormat: "${entityName}Controller.java", fileType: "java", outputDir: "", packageSuffix: "",customParams: "{}", generateOnce: false }
+#    - { templateFile: "addDto.ftl", fileNameFormat: "${entityName}AddDto.java", fileType: "java", outputDir: "", packageSuffix: "",customParams: "{}", generateOnce: false }
+#    - { templateFile: "updateDto.ftl", fileNameFormat: "${entityName}UpdateDto.java", fileType: "java", outputDir: "", packageSuffix: "",customParams: "{}", generateOnce: false }
+#    - { templateFile: "queryDto.ftl", fileNameFormat: "${entityName}QueryDto.java", fileType: "java", outputDir: "", packageSuffix: "",customParams: "{}", generateOnce: false }
+#    - { templateFile: "vo.ftl", fileNameFormat: "${entityName}Vo.java", fileType: "java", outputDir: "", packageSuffix: "",customParams: "{}", generateOnce: false }
+#    - { templateFile: "mapperxml.ftl", fileNameFormat: "${entityName}Mapper.xml", fileType: "resource", outputDir: "", packageSuffix: "", customParams: "{}", generateOnce: false }
+
+pomSettings:
+  dependencyMode: append  # 追加模式，支持 append 和 overwrite
+  properties:
+    java.version: "17"
+    project.build.sourceEncoding: "UTF-8"
+    lombok.version: "1.18.30"
+  dependencies:
+    - { groupId: "org.springframework.boot", artifactId: "spring-boot-starter-web", version: "3.5.4" }
+    - { groupId: "com.baomidou", artifactId: "mybatis-plus-spring-boot3-starter", version: "3.5.5" }
+    # 新增: 明确添加 mybatis-plus-extension 依赖
+    - { groupId: "com.baomidou", artifactId: "mybatis-plus-extension", version: "3.5.5" }
+    - { groupId: "javax.annotation", artifactId: "javax.annotation-api", version: "1.3.2" }
+    - { groupId: "com.mysql", artifactId: "mysql-connector-j" , version: "9.3.0" }
+    - { groupId: "org.projectlombok", artifactId: "lombok", scope: "provided" ,version: "1.18.30" }
+    - { groupId: "org.springdoc", artifactId: "springdoc-openapi-starter-webmvc-ui", version: "2.8.9" }
+    # 新增: 添加 javax.servlet-api 依赖以兼容旧模板
+    - { groupId: "javax.servlet", artifactId: "javax.servlet-api", version: "4.0.5", scope: "provided" }
+  pluginMode: append
+  # Maven Build 插件配置
+  buildPlugins:
+    - groupId: org.apache.maven.plugins
+      artifactId: maven-compiler-plugin
+      version: 3.8.1 # 如果需要指定版本，可以在这里添加
+      configuration:
+        source: ${java.version} # 使用Maven属性引用Java版本
+        target: ${java.version}
+        encoding: ${project.build.sourceEncoding} # 使用Maven属性引用项目编码
+        annotationProcessorPaths:
+          - groupId: org.projectlombok
+            artifactId: lombok
+            version: ${lombok.version} # 使用Maven属性引用Lombok版本
+    - groupId: org.springframework.boot
+      artifactId: spring-boot-maven-plugin
+      version: 2.7.5 # 如果需要指定版本，可以在这里添加
+      configuration:
+        excludes:
+          - groupId: org.projectlombok
+            artifactId: lombok
+      executions:
+        - goals:
+            - repackage
+
+# Swagger/OpenAPI 配置
+swagger:
+  enableSwagger: true # 是否启用Swagger文档生成
+  swaggerTitle: 我的项目 API 文档 # API 文档标题
+  swaggerVersion: 1.0.0 # API 版本
+  swaggerDescription: 这是一个使用代码生成器生成的项目 API # API 描述
