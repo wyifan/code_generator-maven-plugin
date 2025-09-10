@@ -34,9 +34,10 @@ public final class Constants {
         public static final String SERVICE_IMPL = "service.impl";
         public static final String MAPPER = "mapper";
         public static final String ENTITY = "entity";
-        public static final String CONFIG ="config";
+        public static final String CONFIG = "config";
         public static final String HANDLER = "handler";
         public static final String INTERCEPTOR = "interceptor";
+        public static final String EXCEPTION = "exception";
     }
 
     public static final class FileConstant {

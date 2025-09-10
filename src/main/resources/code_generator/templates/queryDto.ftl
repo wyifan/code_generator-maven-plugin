@@ -15,7 +15,7 @@ import java.math.BigDecimal;
 @Data
 @Accessors(chain = true)
 @Schema(description = "${entityName}查询DTO")
-public class ${entityName}QueryDto  extends BasePageQueryDTO {
+public class ${entityName}QueryDto  extends BasePageQueryDto {
 
 <#list tableConfig.columns as column>
     /**

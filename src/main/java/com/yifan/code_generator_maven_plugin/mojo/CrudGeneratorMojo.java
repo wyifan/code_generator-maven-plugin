@@ -26,13 +26,13 @@ public class CrudGeneratorMojo extends AbstractMojo {
         printInfoLog("Generating code...");
         try {
             // 1 读取配置
-            GeneratorConfig config = ConfigLoaderUtil.getInstance(project,getLog()).getGeneratorConfig();
+            GeneratorConfig config = ConfigLoaderUtil.getInstance(project, getLog()).getGeneratorConfig();
 
             // 2. 处理pom文件
             printInfoLog("Begin to handle pom file...");
             DependencyMgmt dependencyMgmt = new DependencyMgmt();
             dependencyMgmt.addDependenciesFromPlugin(project, config.getPomSettings().getDependencies(),
-                    config.getPomSettings().getBuildPlugins());
+                    config.getPomSettings().getBuildPlugins(), config.getPomSettings().getResourceConfig());
             printInfoLog("End handle pom file.");
 
             // 3. 处理application.yml生成

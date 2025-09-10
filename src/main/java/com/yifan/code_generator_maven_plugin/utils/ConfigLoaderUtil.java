@@ -266,6 +266,14 @@ public final class ConfigLoaderUtil {
                     pluginConfig -> pluginConfig.getGroupId() + ":" + pluginConfig.getArtifactId()));
         }
 
+        // 处理 resource信息
+        if (userSetting.getResourceConfig() == null || userSetting.getResourceConfig().size() == 0) {
+            mergePomSetting.setResourceConfig(pluginSetting.getResourceConfig());
+        } else {
+            mergePomSetting.setResourceConfig(CommonFunc.mergeLists(pluginSetting.getResourceConfig(),
+                    userSetting.getResourceConfig(), ResourceConfig::getDirectory));
+        }
+
         return mergePomSetting;
     }
 }

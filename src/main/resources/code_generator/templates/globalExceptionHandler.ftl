@@ -1,7 +1,7 @@
 package ${templateConfig.packageInfo};
 
-import com.example.project.dto.ApiResponse;
-import com.example.project.exception.BizException;
+import ${basePackage}.ApiResponse;
+import ${exceptionPackage}.BizException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.support.DefaultMessageSourceResolvable;
 import org.springframework.web.bind.MethodArgumentNotValidException;

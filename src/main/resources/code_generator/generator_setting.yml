@@ -44,6 +44,7 @@ modelSettings:
     - { templateFile: "queryDto.ftl", fileNameFormat: "${entityName}QueryDto.java", fileType: "java", outputDir: "", packageSuffix: "dto",customParams: "{}", generateOnce: false }
     - { templateFile: "vo.ftl", fileNameFormat: "${entityName}Vo.java", fileType: "java", outputDir: "", packageSuffix: "vo",customParams: "{}", generateOnce: false }
     - { templateFile: "mapperXml.ftl", fileNameFormat: "${entityName}Mapper.xml", fileType: "resource", outputDir: "", packageSuffix: "", customParams: "{}", generateOnce: false }
+    - { templateFile: "bizException.ftl", fileNameFormat: "BizException.java", fileType: "java", outputDir: "", packageSuffix: "exception", customParams: "{}", generateOnce: true }
 
     - { templateFile: "springbootApplication.ftl", fileNameFormat: "${moduleName}Application.java", fileType: "java", outputDir: "", packageSuffix: "", customParams: "{}", generateOnce: true }
     - { templateFile: "basePageQueryDto.ftl", fileNameFormat: "BasePageQueryDto.java", fileType: "java", outputDir: "", packageSuffix: "dto", customParams: "{}", generateOnce: true }
@@ -97,6 +98,11 @@ pomSettings:
       executions:
         - goals:
             - repackage
+  resourceConfig:
+    - directory: src/main/resources
+      excludes:
+        - code_generator/**
+        - sql/**
 
 # Swagger/OpenAPI 配置
 swagger:

@@ -41,7 +41,7 @@ public class ApiResponse<T> implements Serializable {
     * @return 响应实体
     */
     public static <T> ApiResponse<T> success(T data) {
-        return new ApiResponse<>(200, "操作成功", data);
+        return new ApiResponse<>(200, "操作成功", data, LocalDateTime.now());
     }
 
     /**
@@ -52,6 +52,6 @@ public class ApiResponse<T> implements Serializable {
     * @return 响应实体
     */
     public static <T> ApiResponse<T> fail(Integer code, String message) {
-        return new ApiResponse<>(code, message, null);
+        return new ApiResponse<>(code, message, null, LocalDateTime.now();
     }
 }

@@ -14,4 +14,5 @@ public class PomSetting {
     private List<DependencyInfo> dependencies = new ArrayList<>();
     private String pluginMode = Constants.ConfigModeConstant.OVERWRITE_MODE; // Added
     private List<PluginConfig> buildPlugins = new ArrayList<>();
+    private List<ResourceConfig> resourceConfig;
 }

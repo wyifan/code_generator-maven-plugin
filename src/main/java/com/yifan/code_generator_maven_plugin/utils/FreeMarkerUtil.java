@@ -52,7 +52,7 @@ public class FreeMarkerUtil {
         String templateAppendMode = modelSetting.getTemplateAppendMode();
 
         String basePackage = baseConfig.getBasePackagePrefix();
-        String templateDir = modelSetting.getTemplateDir();
+        String templateDir; // 不能直接取modelSetting中的templateDir，用户如果配置了modelSetting，那么这个值会被写成用户配置的，从而影响到插件内部模板
         for (TableConfig tc : modelSetting.getTables()) {
             for (TemplateConfig templateConfig : modelSetting.getTemplates()) {
 
@@ -65,7 +65,7 @@ public class FreeMarkerUtil {
                     // 填充templateConfig中packageInfo信息
                     templateConfig.setPackageInfo(projectPackage);
                 }
-
+                templateDir = templateConfig.getTemplateDir();
                 printInfoLog("Template:" + templateConfig.getTemplateFile() + " dir:" + templateDir);
 
                 // 调用内部生成方法
@@ -132,14 +132,13 @@ public class FreeMarkerUtil {
             }
 
             File outputFile = new File(targetDir, generatedFileName);
-
             // 6. 处理 overwrite 和 generateOnce 逻辑,认为overwrite已经不需要处理了 20250903
-//            if ("append".equalsIgnoreCase(templateAppendMode) && outputFile.exists()) {
-//                System.out.println("Skipped file (append mode): " + outputFile.getAbsolutePath());
-//                return;
-//            }
+            if (outputFile.exists()) { // 文件已经存在便不生成
+                printInfoLog("Skipped file File exist : " + outputFile.getAbsolutePath());
+                return;
+            }
             if (templateConfig.isGenerateOnce() && outputFile.exists()) {
-                System.out.println("Skipped file (generateOnce mode): " + outputFile.getAbsolutePath());
+                printInfoLog("Skipped file (generateOnce mode): " + outputFile.getAbsolutePath());
                 return;
             }
 
@@ -233,7 +232,7 @@ public class FreeMarkerUtil {
         dataModel.put("configPackage", projectPackage + "." + Constants.PackageSuffix.CONFIG);
         dataModel.put("handlerPackage", projectPackage + "." + Constants.PackageSuffix.HANDLER);
         dataModel.put("interceptorPackage", projectPackage + "." + Constants.PackageSuffix.INTERCEPTOR);
-
+        dataModel.put("exceptionPackage", projectPackage + "." + Constants.PackageSuffix.EXCEPTION);
 
     }
 

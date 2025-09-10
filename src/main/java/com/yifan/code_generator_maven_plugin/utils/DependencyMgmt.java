@@ -2,6 +2,7 @@ package com.yifan.code_generator_maven_plugin.utils;
 
 import com.yifan.code_generator_maven_plugin.model.DependencyInfo;
 import com.yifan.code_generator_maven_plugin.model.PluginConfig;
+import com.yifan.code_generator_maven_plugin.model.ResourceConfig;
 import org.apache.maven.model.*;
 import org.apache.maven.model.io.xpp3.MavenXpp3Reader;
 import org.apache.maven.model.io.xpp3.MavenXpp3Writer;
@@ -11,9 +12,7 @@ import org.codehaus.plexus.util.xml.pull.XmlPullParserException;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
-import java.util.List;
-import java.util.Optional;
-import java.util.Properties;
+import java.util.*;
 
 /**
  * package_name: com.yifan.codegen_maven_plugin.utils
@@ -84,11 +83,48 @@ public class DependencyMgmt {
      * @throws XmlPullParserException When an error occurs parsing the POM file.
      */
     public void addDependenciesFromPlugin(MavenProject mavenProject, List<DependencyInfo> dependencies,
-                                          List<PluginConfig> plugins)
+                                          List<PluginConfig> plugins, List<ResourceConfig> resourceConfigs)
             throws IOException, XmlPullParserException {
         File projectDir = mavenProject.getBasedir();
         File parentDir = mavenProject.getParent() != null ? mavenProject.getParent().getBasedir() : null;
-        addDependenciesToAppropriatePom(projectDir, parentDir, dependencies, plugins);
+        addDependenciesToAppropriatePom(projectDir, parentDir, dependencies, plugins, resourceConfigs);
+    }
+
+    /**
+     * Handles the addition or update of resource exclusions from a list of ResourceConfig objects.
+     *
+     * @param model           The Maven Model to modify.
+     * @param resourceConfigs The list of resource configurations to apply.
+     */
+    private static void handleResources(Model model, List<ResourceConfig> resourceConfigs) {
+        if (resourceConfigs == null) return;
+
+        for (ResourceConfig resCfg : resourceConfigs) {
+            String dir = resCfg.getDirectory();
+            List<String> excludes = resCfg.getExcludes();
+
+            Optional<Resource> existingRes = model.getBuild().getResources().stream()
+                    .filter(r -> r.getDirectory().equals(dir))
+                    .findFirst();
+
+            if (existingRes.isPresent()) {
+                // 如果存在，则添加排除项
+                Resource r = existingRes.get();
+                for (String ex : excludes) {
+                    if (!r.getExcludes().contains(ex)) {
+                        r.addExclude(ex);
+                    }
+                }
+            } else {
+                // 如果不存在，则添加一个新的资源
+                Resource r = new Resource();
+                r.setDirectory(dir);
+                if (excludes != null) {
+                    r.setExcludes(new ArrayList<>(excludes));
+                }
+                model.getBuild().addResource(r);
+            }
+        }
     }
 
     // UPDATED: 此方法现在处理所有依赖，并在最后统一写入POM文件
@@ -102,7 +138,7 @@ public class DependencyMgmt {
      * @throws Exception 当处理POM文件时发生错误
      */
     public void addDependenciesToAppropriatePom(File projectDir, File parentDir, List<DependencyInfo> dependencies,
-                                                List<PluginConfig> plugins)
+                                                List<PluginConfig> plugins, List<ResourceConfig> resourceConfigs)
             throws IOException, XmlPullParserException {
         File projectPomFile = new File(projectDir, POM_XML);
         Model projectModel = pomReader.readModel(projectPomFile);
@@ -125,7 +161,9 @@ public class DependencyMgmt {
             }
         }
 
-        updateBuildPlugins(projectModel, plugins);
+        handlePlugins(projectModel, plugins);
+
+        handleResources(projectModel, resourceConfigs);
 
         // ADDED: 统一在循环外部写入文件，确保只写一次
         pomReader.writeModel(projectModel, projectPomFile);
@@ -137,7 +175,7 @@ public class DependencyMgmt {
      * 向合适的POM文件中添加依赖。
      * * @param projectDir 项目根目录
      *
-     * @param parentDir  父项目目录（如果当前项目是模块）
+     * @param parentDir      父项目目录（如果当前项目是模块）
      * @param dependencyInfo 要添加的依赖
      * @throws Exception 当处理POM文件时发生错误
      */
@@ -334,26 +372,109 @@ public class DependencyMgmt {
                 // log.info("Plugin " + pluginToAdd.getArtifactId() + " already exists. Updating
                 // configuration if needed.");
             } else {
-                 Plugin compiler = new Plugin();
-                 compiler.setGroupId(pluginToAdd.getGroupId());
-                 compiler.setArtifactId(pluginToAdd.getArtifactId());
-                 pluginToAdd.setVersion(pluginToAdd.getVersion());
-                 Xpp3Dom config = new Xpp3Dom("configuration");
-                 Xpp3Dom source = new Xpp3Dom("source");
-                 source.setValue("${java.version}");
-                 Xpp3Dom target = new Xpp3Dom("target");
-                 target.setValue("${java.version}");
-                 config.addChild(source);
-                 config.addChild(target);
-                 compiler.setConfiguration(config);
+                Plugin compiler = new Plugin();
+                compiler.setGroupId(pluginToAdd.getGroupId());
+                compiler.setArtifactId(pluginToAdd.getArtifactId());
+                pluginToAdd.setVersion(pluginToAdd.getVersion());
+                Xpp3Dom config = new Xpp3Dom("configuration");
+                Xpp3Dom source = new Xpp3Dom("source");
+                source.setValue("${java.version}");
+                Xpp3Dom target = new Xpp3Dom("target");
+                target.setValue("${java.version}");
+                config.addChild(source);
+                config.addChild(target);
+                compiler.setConfiguration(config);
 
-                 // log.info("Adding new plugin: " + pluginToAdd.getArtifactId());
-                 build.addPlugin(compiler);
+                // log.info("Adding new plugin: " + pluginToAdd.getArtifactId());
+                build.addPlugin(compiler);
 
 
             }
         }
+    }
 
+    public void handlePlugins(Model model, List<PluginConfig> pluginConfigs) {
+        System.out.println(pluginConfigs.size());
+
+        if (pluginConfigs == null) return;
+
+        Map<String, Plugin> pluginMap = model.getBuild().getPluginsAsMap();
+        for (PluginConfig pluginCfg : pluginConfigs) {
+            String key = pluginCfg.getGroupId() + ":" + pluginCfg.getArtifactId();
+
+            Plugin existing = pluginMap.get(key);
+            if (existing == null) {
+                Plugin newPlugin = new Plugin();
+                newPlugin.setGroupId(pluginCfg.getGroupId());
+                newPlugin.setArtifactId(pluginCfg.getArtifactId());
+                if (pluginCfg.getVersion() != null) {
+                    newPlugin.setVersion(pluginCfg.getVersion());
+                }
+                if (pluginCfg.getConfiguration() != null) {
+                    newPlugin.setConfiguration(toXpp3Dom(pluginCfg.getConfiguration()));
+                }
+                model.getBuild().addPlugin(newPlugin);
+            } else {
+                if (pluginCfg.getConfiguration() != null) {
+                    Xpp3Dom existingCfg = (Xpp3Dom) existing.getConfiguration();
+                    Xpp3Dom newCfg = toXpp3Dom(pluginCfg.getConfiguration());
+                    existing.setConfiguration(mergeXpp3Dom(existingCfg, newCfg));
+                }
+            }
+        }
+    }
+
+    private Xpp3Dom toXpp3Dom(Object obj) {
+        if (!(obj instanceof Map)) return null;
+        Map<String, Object> map = (Map<String, Object>) obj;
+        Xpp3Dom root = new Xpp3Dom("configuration");
+        for (Map.Entry<String, Object> e : map.entrySet()) {
+            root.addChild(toDomNode(e.getKey(), e.getValue()));
+        }
+        return root;
+    }
+
+    private Xpp3Dom toDomNode(String name, Object value) {
+        Xpp3Dom node = new Xpp3Dom(name);
+        if (value instanceof Map) {
+            for (Map.Entry<String, Object> e : ((Map<String, Object>) value).entrySet()) {
+                node.addChild(toDomNode(e.getKey(), e.getValue()));
+            }
+        } else if (value instanceof List) {
+            for (Object item : (List<?>) value) {
+                node.addChild(toDomNode(name, item));
+            }
+        } else {
+            node.setValue(String.valueOf(value));
+        }
+        return node;
+    }
+
+    private Xpp3Dom mergeXpp3Dom(Xpp3Dom base, Xpp3Dom add) {
+        if (base == null) return add;
+        if (add == null) return base;
+
+        for (Xpp3Dom childAdd : add.getChildren()) {
+            Xpp3Dom childBase = base.getChild(childAdd.getName());
+            if (childBase == null) {
+                base.addChild(cloneDom(childAdd));
+            } else {
+                mergeXpp3Dom(childBase, childAdd);
+            }
+        }
+        if (add.getValue() != null && (base.getValue() == null || base.getValue().isEmpty())) {
+            base.setValue(add.getValue());
+        }
+        return base;
+    }
+
+    private Xpp3Dom cloneDom(Xpp3Dom dom) {
+        Xpp3Dom clone = new Xpp3Dom(dom.getName());
+        clone.setValue(dom.getValue());
+        for (Xpp3Dom child : dom.getChildren()) {
+            clone.addChild(cloneDom(child));
+        }
+        return clone;
     }
 
     /**
